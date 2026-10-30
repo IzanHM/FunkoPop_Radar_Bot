@@ -1,0 +1,81 @@
+package com.funko;
+
+import java.sql.*;
+
+public class DataBase {
+
+    //Definimos ruta de la BD local (archivo funkos.db en el proyecto)
+    private static final String URL_DB = "jdbc:sqlite:funkos.db";
+
+    //Inicializamos la BD y creamos la tabla si no existe
+    public static void inicializarBaseDeDatos() {
+        String sql = "CREATE TABLE IF NOT EXISTS funkos (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "titulo TEXT NOT NULL," +
+                "precio REAL NOT NULL," +
+                "url_compra TEXT NOT NULL,"+
+                "url_imagen TEXT NOT NULL)";
+
+        try (Connection conn = DriverManager.getConnection(URL_DB);
+             Statement stmt = conn.createStatement()) { /* Usar Statement para ódenes estáticas o consultas
+                                                           que no llevan variables externas ni interrogantes */
+
+            stmt.execute(sql); //Enviamos la orden SQL a la BD para que ejecute la tabla
+            System.out.println("Base de datos inicializada correctamente");
+
+        } catch (SQLException e) {
+            System.out.println("Error al crear la base de datos: " + e.getMessage());
+        }
+    }
+    
+    
+    //Método para guardar un Funko en la BD
+    public static void guardarFunko (Funko funko) {
+        String sql = "INSERT INTO funkos (titulo, precio, url_compra, url_imagen) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(URL_DB);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) { /*Usar PreparedStatement siempre que guarde,
+                                                                       modifique o consulte datos que dependen de
+                                                                       variables o datos dinámicos (?) */
+
+            //Sustituimos los ? por los datos reales de cada funko
+            pstmt.setString(1, funko.getTitulo());
+            pstmt.setDouble(2, funko.getPrecio());
+            pstmt.setString(3, funko.getUrlCompra());
+            pstmt.setString(4, funko.getUrlImagen());
+
+            //Ejecutamos la insercción
+            pstmt.executeUpdate();
+            System.out.println("-> Funko guardado en la BD: " + funko.getTitulo());
+        } catch (SQLException e) {
+            System.out.println("Error al guardar el funko en la BD: " + e.getMessage());
+        }
+    }
+    
+
+    //Método para concultar y listar los Funkos guardados en la DB
+    public static void listarFunkos() {
+        String sql = "SELECT id, titulo, precio, url_compra, url_imagen FROM funkos";
+
+        try (Connection conn = DriverManager.getConnection(URL_DB);
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(sql)) { //Resultado de la consulta que hemos realizado
+
+            System.out.println("--- LISTA DE FUNKOS EN LA DB ---");
+
+            //Recorremos los resultados fila a fila
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String titulo = rs.getString("titulo");
+                double precio = rs.getDouble("precio");
+                String urlCompra = rs.getString("url_compra");
+
+                System.out.println("ID: " + id + " | " + titulo + "| Precio: " + precio + "€ | Enlace: " + urlCompra);
+            }
+
+            System.out.println("-----------------------------------------");
+        } catch (SQLException e) {
+            System.out.println("Error al consultar la base de datos: " + e.getMessage());
+        }
+    }
+}

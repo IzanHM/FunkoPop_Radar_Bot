@@ -1,0 +1,15 @@
+# Archivos de compilación de Maven
+target/
+
+# Base de datos SQLite local
+*.db
+
+# Archivos de configuración de IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Archivos de sistema de Windows
+Thumbs.db
+ejecutar_radar.bat

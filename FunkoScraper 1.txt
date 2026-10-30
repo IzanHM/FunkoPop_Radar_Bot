@@ -1,0 +1,71 @@
+//Logica para conectarnos a Amazon
+
+package com.funko;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class FunkoScraper {
+    public List<Funko> searchFunkos() {
+
+        List<Funko> Funkoslist = new ArrayList<>();
+
+        //URL de la página de búsqueda
+        String url = "https://example.com";
+
+        try {
+            //Con Jsoup nos conectamos a la web simulando ser un navegador real
+            Document doc = Jsoup.connect(url) //Orden para descargar código HTML de la web
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .timeout(10000) //Tiempo de espera máximo 10 segundos
+                    .get();
+
+            //Buscamos todos los bloques de productos en la web
+            Elements productosHTML = doc.select(".producto-item");
+
+            //Recorremos cada producto encontrado
+            for (Element producto : productosHTML) {
+
+                //Extraemos el título del producto
+                String titulo = producto.select(".titulo-funko").text(); //.text cuando extraemos lo de dentro de la etiqueta
+
+                //Extraemos el precio y lo limpiamos
+                String precioTexto = producto.select(".precio-funko").text();
+                double precio = convertirPrecioDouble(precioTexto);
+
+                //Extraemos los enlaces de la compra e imagen
+                String urlCompra = producto.select("a").attr("href"); //.attr cuando extraemos el atributo interno de la etiqueta
+                String urlImagen = producto.select("img").attr("src");
+
+                //Creamos un objeto Funko y lo añadimos a la lista
+                Funko funkoEncontrado = new Funko(titulo, precio, urlCompra, urlImagen);
+                Funkoslist.add(funkoEncontrado);
+            }
+
+            System.out.println("Se han extraído " + Funkoslist.size() + " Funkos de la página web");
+
+        } catch (IOException e) {
+            System.out.println("Error al conectar con la página web: " +e.getMessage());
+        }
+
+        return Funkoslist;
+    }
+
+    //Método para pasar precio en texto a número decimal
+    private double convertirPrecioDouble(String textoPrecio) {
+        try {
+            /* Limpiamos símbolos y espacios
+            y cambiamos comas por puntos*/
+            String limpio = textoPrecio.replace("€", "").replace("$", "").trim().replace(",", ".");
+            return  Double.parseDouble(limpio);
+        } catch (NumberFormatException e) {
+            return 0.0; //Devolvemos si falla
+        }
+    }
+}
